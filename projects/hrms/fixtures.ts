@@ -27,8 +27,8 @@ export const test = base.extend<HrmsFixtures>({
       await loginPage.goto();
       await loginPage.login(hrmsConfig.credentials.username, hrmsConfig.credentials.password);
 
-      // Wait for a post-login indicator before saving state.
-      await expect(page).toHaveURL(new RegExp(hrmsConfig.routes.dashboard));
+      // Wait for post-login redirect — Frappe lands on the launchpad (/).
+      await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15_000 });
 
       await saveStorageState(context, authConfig);
 

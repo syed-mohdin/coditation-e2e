@@ -12,8 +12,9 @@ export default defineConfig({
   testDir: './projects',
   testMatch: '**/*.spec.ts',
 
-  // Global timeouts
-  timeout: 30_000,
+  // Global timeouts — setup tests do login + multiple API calls + page load,
+  // which can approach 30s on a lightly loaded single-node Frappe server.
+  timeout: 60_000,
   expect: { timeout: 5_000 },
 
   // Retry on CI only; fail fast locally
