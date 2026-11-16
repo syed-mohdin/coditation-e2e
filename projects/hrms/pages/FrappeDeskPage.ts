@@ -63,6 +63,23 @@ export class FrappeDeskPage {
     await this.page.selectOption(`[data-fieldname="${fieldname}"] select`, { label: value });
   }
 
+  /**
+   * Set a field value through Frappe's cur_frm.set_value(), which properly
+   * triggers the form's change tracking and makes the form dirty so Save works.
+   * Use this for fields that don't respond to native DOM events.
+   */
+  async setFormValue(fieldname: string, value: string | number): Promise<void> {
+    await this.page.evaluate(
+      ([fn, val]) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const frm = (globalThis as any).cur_frm;
+        if (frm) frm.set_value(fn as string, val);
+      },
+      [fieldname, value] as [string, string | number],
+    );
+    await this.page.waitForTimeout(300);
+  }
+
   // ── Checkbox ────────────────────────────────────────────────────────────────
 
   async checkField(fieldname: string): Promise<void> {
@@ -169,9 +186,20 @@ export class FrappeDeskPage {
 
   // ── Save / Submit ───────────────────────────────────────────────────────────
 
-  /** Click the Save button and wait for the form to settle. */
+  /** Save the current form. Tries the Save button first; falls back to cur_frm.save(). */
   async save(): Promise<void> {
-    await this.page.locator('button[data-label="Save"]').click();
+    const saveBtn = this.page.locator('button[data-label="Save"]');
+    const btnVisible = await saveBtn.isVisible({ timeout: 1_500 }).catch(() => false);
+    if (btnVisible && await saveBtn.isEnabled().catch(() => false)) {
+      await saveBtn.click();
+    } else {
+      // Fall back to triggering save via Frappe's JS API.
+      await this.page.evaluate(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const frm = (globalThis as any).cur_frm;
+        if (frm) frm.save();
+      });
+    }
     await this.page.waitForLoadState('networkidle');
     await this.page.waitForTimeout(600);
   }
