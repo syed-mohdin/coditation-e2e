@@ -1,0 +1,23 @@
+node_modules/
+dist/
+
+# Test artifacts
+test-results/
+playwright-report/
+blob-report/
+
+# Auth state files (may contain session tokens)
+**/auth-state/
+**/.auth/
+
+# Environment files — never commit real credentials
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+*.log
